@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#2a2a2a">
+  <title>단어장</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif; transition: background-color 0.3s, color 0.3s; }
+    body.light { background-color: #f5f5f5; color: #333; }
+    body.dark { background-color: #1a1a1a; color: #e0e0e0; }
+    
+    /* Header - Fixed */
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 100; }
+    body.light .header { background-color: #fff; border-bottom: 1px solid #e0e0e0; }
+    body.dark .header { background-color: #2a2a2a; border-bottom: 1px solid #444; }
+    .hamburger { width: 30px; height: 30px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-around; padding: 5px 0; }
+    .hamburger span { display: block; height: 3px; background-color: currentColor; border-radius: 2px; }
+    .book-selector { flex: 1; margin: 0 15px; padding: 8px 12px; border: 1px solid; border-radius: 8px; font-size: 16px; }
+    body.light .book-selector { background-color: #f9f9f9; border-color: #ddd; color: #333; }
+    body.dark .book-selector { background-color: #333; border-color: #555; color: #e0e0e0; }
+    .theme-toggle { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; }
+    body.light .theme-toggle { background-color: #333; color: #fff; }
+    body.dark .theme-toggle { background-color: #fff; color: #333; }
+    
+    /* Sidebar */
+    .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; z-index: 200; transition: left 0.3s; padding: 20px; overflow-y: auto; }
+    body.light .sidebar { background-color: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+    body.dark .sidebar { background-color: #2a2a2a; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+    .sidebar.open { left: 0; }
+    .sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 150; display: none; }
+    .sidebar-overlay.show { display: block; }
+    .sidebar-item { padding: 15px 10px; margin: 5px 0; cursor: pointer; border-radius: 8px; }
+    body.light .sidebar-item:hover { background-color: #f0f0f0; }
+    body.dark .sidebar-item:hover { background-color: #3a3a3a; }
+    
+    /* Main Container - Scrollable */
+    .container { padding-top: 60px; min-height: 100vh; }
+    
+    /* Card Title - Fixed below header */
+    .card-title { position: sticky; top: 60px; padding: 20px; font-size: 18px; font-weight: 500; text-align: center; border-bottom: 1px solid; z-index: 90; }
+    body.light .card-title { background-color: #fff; border-color: #e0e0e0; }
+    body.dark .card-title { background-color: #2a2a2a; border-color: #444; }
+    .card-title.back-side { background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); border-bottom-color: #ffd700; }
+    body.dark .card-title.back-side { background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,215,0,0.1)); }
+    .card-counter { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.7; }
+    
+    /* Card Content - Scrollable */
+    .card-content { padding: 30px 20px; font-size: 16px; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; max-width: 800px; margin: 0 auto; }
+    .card-content.editing { padding: 15px; }
+    .edit-textarea { width: 100%; min-height: 300px; padding: 15px; border: 2px solid #ffd700; border-radius: 8px; font-size: 16px; line-height: 1.8; resize: vertical; font-family: inherit; }
+    body.light .edit-textarea { background-color: #fffef5; color: #333; }
+    body.dark .edit-textarea { background-color: #2a2a14; color: #e0e0e0; }
+    .edit-buttons { display: flex; gap: 10px; padding: 15px; justify-content: center; border-top: 2px solid #ffd700; }
+    .edit-btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .edit-btn.save { background-color: #4caf50; color: #fff; }
+    .edit-btn.cancel { background-color: #f44336; color: #fff; }
+    
+    /* Card Footer - Fixed at bottom */
+    .card-footer { position: fixed; bottom: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-top: 1px solid; z-index: 90; }
+    body.light .card-footer { background-color: #fff; border-color: #e0e0e0; }
+    body.dark .card-footer { background-color: #2a2a2a; border-color: #444; }
+    .week-status { font-size: 14px; font-weight: 500; padding: 4px 8px; border-radius: 4px; }
+    .week-status.read { color: #4caf50; background-color: rgba(76, 175, 80, 0.1); }
+    .week-status.unread { color: #f44336; background-color: rgba(244, 67, 54, 0.1); }
+    .action-buttons { display: flex; gap: 15px; }
+    .action-btn { width: 40px; height: 40px; border: 2px solid transparent; border-radius: 50%; cursor: pointer; font-size: 20px; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+    body.light .action-btn { background-color: #f5f5f5; color: #666; }
+    body.dark .action-btn { background-color: #3a3a3a; color: #aaa; }
+    .action-btn:active { transform: scale(0.95); }
+    .action-btn.active { background-color: #ff9800; color: #fff; border-color: #ff9800; }
+    .action-btn.has-comment { background-color: #2196f3; color: #fff; border-color: #2196f3; }
+    .action-btn.has-bookmark { background-color: #ffd700; color: #333; border-color: #ffd700; }
+    
+    /* Edit Button */
+    .edit-icon-btn { position: fixed; right: 20px; bottom: 90px; width: 50px; height: 50px; border-radius: 50%; background-color: #ffd700; color: #333; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(255,215,0,0.4); z-index: 95; }
+    .edit-icon-btn:active { transform: scale(0.95); }
+    
+    /* Flip Indicator */
+    .flip-indicator { position: fixed; top: 50%; right: 20px; transform: translateY(-50%); font-size: 14px; opacity: 0.5; z-index: 85; cursor: pointer; padding: 10px; }
+    
+    /* Bottom Padding for Footer */
+    .content-wrapper { padding-bottom: 80px; }
+    
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 300; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.5); }
+    .modal.show { display: flex; }
+    .modal-content { width: 90%; max-width: 500px; max-height: 80vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    body.light .modal-content { background-color: #fff; }
+    body.dark .modal-content { background-color: #2a2a2a; }
+    .modal-header { padding: 20px; font-size: 18px; font-weight: 500; border-bottom: 1px solid; }
+    body.light .modal-header { border-color: #e0e0e0; }
+    body.dark .modal-header { border-color: #444; }
+    .modal-body { flex: 1; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-footer { padding: 15px 20px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid; }
+    body.light .modal-footer { border-color: #e0e0e0; }
+    body.dark .modal-footer { border-color: #444; }
+    .modal-btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .modal-btn.primary { background-color: #2196f3; color: #fff; }
+    body.light .modal-btn.secondary { background-color: #f5f5f5; color: #666; }
+    body.dark .modal-btn.secondary { background-color: #3a3a3a; color: #aaa; }
+    
+    textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid; border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit; }
+    body.light textarea { background-color: #f9f9f9; border-color: #ddd; color: #333; }
+    body.dark textarea { background-color: #333; border-color: #555; color: #e0e0e0; }
+    .comment-item { padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+    body.light .comment-item { background-color: #f9f9f9; }
+    body.dark .comment-item { background-color: #333; }
+    .comment-text { flex: 1; white-space: pre-wrap; line-height: 1.5; }
+    .delete-btn { padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: 10px; background-color: #f44336; color: #fff; }
+    .stats-table { width: 100%; border-collapse: collapse; }
+    .stats-table th, .stats-table td { padding: 12px; text-align: left; border-bottom: 1px solid; }
+    body.light .stats-table th, body.light .stats-table td { border-color: #e0e0e0; }
+    body.dark .stats-table th, body.dark .stats-table td { border-color: #444; }
+    .loading { text-align: center; padding: 40px; font-size: 18px; }
+    input[type="text"], input[type="file"] { width: 100%; padding: 10px 12px; border: 1px solid; border-radius: 8px; font-size: 14px; margin: 10px 0; }
+    body.light input[type="text"], body.light input[type="file"] { background-color: #f9f9f9; border-color: #ddd; color: #333; }
+    body.dark input[type="text"], body.dark input[type="file"] { background-color: #333; border-color: #555; color: #e0e0e0; }
+    .checkbox-item { padding: 10px; margin: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 6px; }
+    .no-data { text-align: center; padding: 40px; color: #999; }
+    .page-container { padding: 20px 20px 100px 20px; margin-top: 60px; }
+    .import-section { margin: 20px 0; }
+    .import-label { display: block; margin: 15px 0 5px; font-weight: 500; }
+  </style>
+</head>
+<body class="dark">
+  <div class="header">
+    <div class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></div>
+    <select class="book-selector" id="bookSelector" onchange="onBookFilterChange()"><option value="">전체</option></select>
+    <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+  </div>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar">
+    <div class="sidebar-item" onclick="goToMode('all')">전체 단어장</div>
+    <div class="sidebar-item" onclick="goToMode('unread_today')">오늘 읽지 않은 단어장</div>
+    <div class="sidebar-item" onclick="goToMode('unread_week')">이번주 읽지 않은 단어장</div>
+    <div class="sidebar-item" onclick="goToMode('bookmark')">북마크</div>
+    <div class="sidebar-item" onclick="goToMode('stats')">통계</div>
+    <div class="sidebar-item" onclick="exportLocalStorage()">데이터 내보내기</div>
+    <div class="sidebar-item" onclick="importLocalStorage()">데이터 가져오기</div>
+    <div class="sidebar-item" onclick="showImportPage()">Content/Book 가져오기</div>
+  </div>
+  <div class="container" id="mainContainer"><div class="loading">로딩 중...</div></div>
+  
+  <div class="modal" id="commentModal">
+    <div class="modal-content">
+      <div class="modal-header">코멘트</div>
+      <div class="modal-body">
+        <div id="commentList"></div>
+        <textarea id="newComment" placeholder="새 코멘트를 입력하세요"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeCommentModal()">닫기</button>
+        <button class="modal-btn primary" onclick="addComment()">추가</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal" id="bookmarkModal">
+    <div class="modal-content">
+      <div class="modal-header">북마크 그룹</div>
+      <div class="modal-body">
+        <div id="bookmarkGroupList"></div>
+        <input type="text" id="newBookmarkGroup" placeholder="새 그룹 이름">
+        <button class="modal-btn primary" onclick="addNewBookmarkGroup()" style="width:100%;margin-top:10px">그룹 추가</button>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeBookmarkModal()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const BOOKS = [
+  { id: 'genesis', name: '창세기' },
+  { id: 'exodus', name: '출애굽기' },
+  { id: 'leviticus', name: '레위기' },
+  { id: 'numbers', name: '민수기' },
+  { id: 'deuteronomy', name: '신명기' }
+];
+
+let CONTENTS = [
+  {
+    book: 'genesis',
+    chapter: 1,
+    verse: 1,
+    text: '태초에 하나님이 천지를 창조하시니라',
+    appendix: '히브리어 원문: בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ\n\n이 구절은 성경의 첫 구절로, 하나님의 창조 사역의 시작을 선포합니다. "베레쉬트(בְּרֵאשִׁית)"는 "처음에" 또는 "태초에"를 의미하며, "바라(בָּרָא)"는 무에서 유를 창조하는 하나님만의 고유한 창조 행위를 나타냅니다.'
+  },
+  {
+    book: 'genesis',
+    chapter: 1,
+    verse: 2,
+    text: '땅이 혼돈하고 공허하며 흑암이 깊음 위에 있고 하나님의 영은 수면 위에 운행하시니라',
+    appendix: '혼돈(תֹהוּ)과 공허(בֹהוּ)는 질서가 없고 생명이 없는 상태를 묘사합니다.\n하나님의 영(רוּחַ אֱלֹהִים)이 수면 위를 운행하심은 창조 사역을 준비하시는 하나님의 임재를 나타냅니다.'
+  },
+  {
+    book: 'genesis',
+    chapter: 1,
+    verse: 3,
+    text: '하나님이 이르시되 빛이 있으라 하시니 빛이 있었고',
+    appendix: '하나님의 첫 번째 창조 명령입니다. 말씀으로 창조하시는 하나님의 능력을 보여줍니다.\n\n이 빛은 태양이 창조되기 전의 빛으로(태양은 4일째 창조됨), 하나님 자신의 영광의 빛일 수 있습니다.'
+  },
+  {
+    book: 'genesis',
+    chapter: 1,
+    verse: 4,
+    text: '빛이 하나님이 보시기에 좋았더라 하나님이 빛과 어둠을 나누사',
+    appendix: '"보시기에 좋았더라(טוֹב)"는 창조의 완전함과 목적 달성을 나타내는 표현입니다.\n\n빛과 어둠의 분리는 질서 있는 창조의 시작을 의미합니다.'
+  },
+  {
+    book: 'genesis',
+    chapter: 1,
+    verse: 5,
+    text: '하나님이 빛을 낮이라 부르시고 어둠을 밤이라 부르시니라 저녁이 되고 아침이 되니 이는 첫째 날이니라',
+    appendix: '하나님께서 이름을 지으심으로 권위를 행사하십니다.\n\n히브리식 시간 계산법: 저녁부터 아침까지가 하루입니다.\n첫째 날(יוֹם אֶחָד) - 창조 주간의 시작'
+  },
+  {
+    book: 'exodus',
+    chapter: 20,
+    verse: 1,
+    text: '하나님이 이 모든 말씀으로 말씀하여 이르시되',
+    appendix: '십계명의 서론입니다. 시내산에서 하나님께서 직접 이스라엘 백성에게 주신 율법입니다.'
+  },
+  {
+    book: 'exodus',
+    chapter: 20,
+    verse: 2,
+    text: '나는 너를 애굽 땅, 종 되었던 집에서 인도하여 낸 네 하나님 여호와니라',
+    appendix: '십계명의 전제: 하나님의 구원 행위\n\n하나님께서는 율법을 주시기 전에 먼저 자신을 구원자로 소개하십니다. 이것은 은혜가 율법에 선행함을 보여줍니다.'
+  },
+  {
+    book: 'exodus',
+    chapter: 20,
+    verse: 3,
+    text: '너는 나 외에는 다른 신들을 네게 두지 말라',
+    appendix: '제1계명: 유일신 신앙\n\n히브리어 직역: "내 면전에 다른 신들이 없어야 한다"\n이것은 모든 계명의 기초가 되는 근본 원리입니다.'
+  },
+  {
+    book: 'leviticus',
+    chapter: 19,
+    verse: 18,
+    text: '원수를 갚지 말며 동포를 원망하지 말며 네 이웃 사랑하기를 네 자신과 같이 사랑하라 나는 여호와니라',
+    appendix: '예수님께서 가장 큰 계명 중 하나로 인용하신 구절입니다(마 22:39).\n\n"네 이웃을 네 몸과 같이 사랑하라"는 모든 율법의 핵심입니다.'
+  },
+  {
+    book: 'numbers',
+    chapter: 6,
+    verse: 24,
+    text: '여호와는 네게 복을 주시고 너를 지키시기를 원하며',
+    appendix: '아론의 축복(민 6:24-26)의 첫 번째 부분입니다.\n\n이 축복은 오늘날까지 유대교와 기독교에서 사용되는 가장 오래된 축도문입니다.'
+  },
+  {
+    book: 'deuteronomy',
+    chapter: 6,
+    verse: 4,
+    text: '이스라엘아 들으라 우리 하나님 여호와는 오직 유일한 여호와이시니',
+    appendix: '쉐마(שְׁמַע)로 알려진 유대교의 가장 중요한 신앙고백입니다.\n\n히브리어: שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה אֶחָד\n(쉐마 이스라엘 아도나이 엘로헤이누 아도나이 에하드)\n\n경건한 유대인들은 하루에 두 번 이 구절을 암송합니다.'
+  },
+  {
+    book: 'deuteronomy',
+    chapter: 6,
+    verse: 5,
+    text: '너는 마음을 다하고 뜻을 다하고 힘을 다하여 네 하나님 여호와를 사랑하라',
+    appendix: '예수님께서 가장 큰 계명으로 인용하신 구절입니다(마 22:37).\n\n전인격적 사랑: 마음(감정), 뜻(의지), 힘(능력) 모두를 다해 하나님을 사랑해야 합니다.'
+  }
+];
+let currentIndex = 0;
+let currentMode = 'all';
+let currentBookFilter = '';
+let currentBookmarkGroup = null;
+let filteredContents = [];
+let currentContent = null;
+let isFlipped = false;
+let isEditingAppendix = false;
+
+const storage = {
+  getKey: (book, chapter, verse) => `${book}_${chapter}_${verse}`,
+  
+  saveAppendix: (book, chapter, verse, text) => {
+    localStorage.setItem(`appendix_${storage.getKey(book, chapter, verse)}`, text);
+  },
+  
+  getAppendix: (book, chapter, verse) => {
+    return localStorage.getItem(`appendix_${storage.getKey(book, chapter, verse)}`);
+  },
+  
+  addComment: (book, chapter, verse, comment) => {
+    const key = `comments_${storage.getKey(book, chapter, verse)}`;
+    const comments = JSON.parse(localStorage.getItem(key) || '[]');
+    comments.push({ text: comment, timestamp: Date.now() });
+    localStorage.setItem(key, JSON.stringify(comments));
+  },
+  
+  getComments: (book, chapter, verse) => {
+    const key = `comments_${storage.getKey(book, chapter, verse)}`;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  },
+  
+  deleteComment: (book, chapter, verse, index) => {
+    const key = `comments_${storage.getKey(book, chapter, verse)}`;
+    const comments = JSON.parse(localStorage.getItem(key) || '[]');
+    comments.splice(index, 1);
+    localStorage.setItem(key, JSON.stringify(comments));
+  },
+  
+  addBookmark: (group, book, chapter, verse) => {
+    const key = `bookmark_${group}`;
+    const bookmarks = JSON.parse(localStorage.getItem(key) || '[]');
+    const bookmark = storage.getKey(book, chapter, verse);
+    if (!bookmarks.includes(bookmark)) {
+      bookmarks.push(bookmark);
+      localStorage.setItem(key, JSON.stringify(bookmarks));
+    }
+  },
+  
+  removeBookmark: (group, book, chapter, verse) => {
+    const key = `bookmark_${group}`;
+    const bookmarks = JSON.parse(localStorage.getItem(key) || '[]');
+    const bookmark = storage.getKey(book, chapter, verse);
+    const index = bookmarks.indexOf(bookmark);
+    if (index > -1) {
+      bookmarks.splice(index, 1);
+      localStorage.setItem(key, JSON.stringify(bookmarks));
+    }
+  },
+  
+  getBookmarkGroups: () => {
+    const groups = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('bookmark_')) {
+        groups.push(key.replace('bookmark_', ''));
+      }
+    }
+    return groups;
+  },
+  
+  getBookmarks: (group) => {
+    const key = `bookmark_${group}`;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  },
+  
+  isBookmarked: (book, chapter, verse) => {
+    const groups = storage.getBookmarkGroups();
+    const bookmark = storage.getKey(book, chapter, verse);
+    return groups.some(group => storage.getBookmarks(group).includes(bookmark));
+  },
+  
+  getBookmarkGroupsForVerse: (book, chapter, verse) => {
+    const groups = storage.getBookmarkGroups();
+    const bookmark = storage.getKey(book, chapter, verse);
+    return groups.filter(group => storage.getBookmarks(group).includes(bookmark));
+  },
+  
+  toggleRead: (book, chapter, verse) => {
+    const key = `read_${storage.getKey(book, chapter, verse)}`;
+    const now = new Date().toISOString();
+    if (localStorage.getItem(key)) {
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, now);
+    }
+  },
+  
+  isReadToday: (book, chapter, verse) => {
+    const key = `read_${storage.getKey(book, chapter, verse)}`;
+    const readTime = localStorage.getItem(key);
+    if (!readTime) return false;
+    const readDate = new Date(readTime);
+    const today = new Date();
+    return readDate.toDateString() === today.toDateString();
+  },
+  
+  isReadThisWeek: (book, chapter, verse) => {
+    const key = `read_${storage.getKey(book, chapter, verse)}`;
+    const readTime = localStorage.getItem(key);
+    if (!readTime) return false;
+    const readDate = new Date(readTime);
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monday.setHours(0, 0, 0, 0);
+    return readDate >= monday;
+  }
+};
+
+function loadContents() {
+  filteredContents = CONTENTS.filter(c => {
+    if (currentBookFilter && c.book !== currentBookFilter) return false;
+    
+    if (currentMode === 'unread_today') {
+      return !storage.isReadToday(c.book, c.chapter, c.verse);
+    } else if (currentMode === 'unread_week') {
+      return !storage.isReadThisWeek(c.book, c.chapter, c.verse);
+    } else if (currentMode === 'bookmark' && currentBookmarkGroup) {
+      const bookmarks = storage.getBookmarks(currentBookmarkGroup);
+      return bookmarks.includes(storage.getKey(c.book, c.chapter, c.verse));
+    }
+    return true;
+  });
+  
+  if (filteredContents.length === 0) {
+    document.getElementById('mainContainer').innerHTML = '<div class="no-data">표시할 내용이 없습니다</div>';
+    return;
+  }
+  
+  if (currentIndex >= filteredContents.length) currentIndex = 0;
+  showCard();
+}
+
+function showCard() {
+  currentContent = filteredContents[currentIndex];
+  isFlipped = false;
+  isEditingAppendix = false;
+  
+  const bookName = BOOKS.find(b => b.id === currentContent.book)?.name || currentContent.book;
+  const counter = `${currentIndex + 1} / ${filteredContents.length}`;
+  
+  const frontTitle = `${bookName} ${currentContent.chapter}:${currentContent.verse}`;
+  const frontContent = currentContent.text;
+  
+  const savedAppendix = storage.getAppendix(currentContent.book, currentContent.chapter, currentContent.verse);
+  const appendixText = savedAppendix || currentContent.appendix || '부록 내용이 없습니다';
+  
+  const isRead = storage.isReadThisWeek(currentContent.book, currentContent.chapter, currentContent.verse);
+  const readStatus = isRead ? '<span class="week-status read">읽음</span>' : '<span class="week-status unread">안읽음</span>';
+  
+  const hasComments = storage.getComments(currentContent.book, currentContent.chapter, currentContent.verse).length > 0;
+  const isBookmarked = storage.isBookmarked(currentContent.book, currentContent.chapter, currentContent.verse);
+  
+  const commentBtnClass = hasComments ? 'action-btn has-comment' : 'action-btn';
+  const bookmarkBtnClass = isBookmarked ? 'action-btn has-bookmark' : 'action-btn';
+  const readBtnClass = isRead ? 'action-btn active' : 'action-btn';
+  
+  const html = `
+    <div class="content-wrapper">
+      <div class="card-title" id="cardTitle">
+        ${frontTitle}
+        <span class="card-counter">${counter}</span>
+      </div>
+      <div class="card-content" id="cardContent">
+        ${frontContent}
+      </div>
+    </div>
+    <div class="flip-indicator" onclick="flipCard()">↻ 뒤집기</div>
+    <button class="edit-icon-btn" id="editBtn" onclick="startEditingAppendix()" style="display:none">✎</button>
+    <div class="card-footer">
+      <div>${readStatus}</div>
+      <div class="action-buttons">
+        <button class="${commentBtnClass}" onclick="openCommentModal()">💬</button>
+        <button class="${bookmarkBtnClass}" onclick="openBookmarkModal()">⭐</button>
+        <button class="${readBtnClass}" onclick="toggleRead()">✓</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('mainContainer').innerHTML = html;
+  setupSwipe();
+}
+
+function flipCard() {
+  if (isEditingAppendix) return;
+  
+  const titleEl = document.getElementById('cardTitle');
+  const contentEl = document.getElementById('cardContent');
+  const editBtn = document.getElementById('editBtn');
+  
+  isFlipped = !isFlipped;
+  
+  if (isFlipped) {
+    // Show back side
+    const bookName = BOOKS.find(b => b.id === currentContent.book)?.name || currentContent.book;
+    const counter = `${currentIndex + 1} / ${filteredContents.length}`;
+    titleEl.className = 'card-title back-side';
+    titleEl.innerHTML = `부록: ${bookName} ${currentContent.chapter}:${currentContent.verse}<span class="card-counter">${counter}</span>`;
+    
+    const savedAppendix = storage.getAppendix(currentContent.book, currentContent.chapter, currentContent.verse);
+    const appendixText = savedAppendix || currentContent.appendix || '부록 내용이 없습니다';
+    contentEl.textContent = appendixText;
+    editBtn.style.display = 'block';
+  } else {
+    // Show front side
+    const bookName = BOOKS.find(b => b.id === currentContent.book)?.name || currentContent.book;
+    const counter = `${currentIndex + 1} / ${filteredContents.length}`;
+    titleEl.className = 'card-title';
+    titleEl.innerHTML = `${bookName} ${currentContent.chapter}:${currentContent.verse}<span class="card-counter">${counter}</span>`;
+    contentEl.textContent = currentContent.text;
+    editBtn.style.display = 'none';
+  }
+  
+  window.scrollTo(0, 0);
+}
+
+function startEditingAppendix() {
+  isEditingAppendix = true;
+  const contentEl = document.getElementById('cardContent');
+  const savedAppendix = storage.getAppendix(currentContent.book, currentContent.chapter, currentContent.verse);
+  const appendixText = savedAppendix || currentContent.appendix || '';
+  
+  contentEl.className = 'card-content editing';
+  contentEl.innerHTML = `
+    <textarea class="edit-textarea" id="editTextarea">${appendixText}</textarea>
+    <div class="edit-buttons">
+      <button class="edit-btn cancel" onclick="cancelEditingAppendix()">취소</button>
+      <button class="edit-btn save" onclick="saveAppendix()">저장</button>
+    </div>
+  `;
+  
+  document.getElementById('editBtn').style.display = 'none';
+}
+
+function cancelEditingAppendix() {
+  isEditingAppendix = false;
+  flipCard();
+  setTimeout(() => flipCard(), 10);
+}
+
+function saveAppendix() {
+  const newText = document.getElementById('editTextarea').value;
+  storage.saveAppendix(currentContent.book, currentContent.chapter, currentContent.verse, newText);
+  isEditingAppendix = false;
+  
+  const contentEl = document.getElementById('cardContent');
+  contentEl.className = 'card-content';
+  contentEl.textContent = newText || '부록 내용이 없습니다';
+  
+  document.getElementById('editBtn').style.display = 'block';
+}
+
+function setupSwipe() {
+  let startX = 0, startY = 0;
+  
+  document.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  });
+  
+  document.addEventListener('touchend', (e) => {
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+    
+    // Only trigger swipe if horizontal movement is greater than vertical
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      if (diffX > 0) prevCard();
+      else nextCard();
+    }
+  });
+}
+
+function nextCard() {
+  if (isEditingAppendix) return;
+  if (currentIndex < filteredContents.length - 1) {
+    currentIndex++;
+    showCard();
+    window.scrollTo(0, 0);
+  }
+}
+
+function prevCard() {
+  if (isEditingAppendix) return;
+  if (currentIndex > 0) {
+    currentIndex--;
+    showCard();
+    window.scrollTo(0, 0);
+  }
+}
+
+function openCommentModal() {
+  const comments = storage.getComments(currentContent.book, currentContent.chapter, currentContent.verse);
+  const commentList = document.getElementById('commentList');
+  
+  if (comments.length === 0) {
+    commentList.innerHTML = '<div style="color:#999;text-align:center;padding:20px">코멘트가 없습니다</div>';
+  } else {
+    commentList.innerHTML = comments.map((c, i) => `
+      <div class="comment-item">
+        <div class="comment-text">${c.text}</div>
+        <button class="delete-btn" onclick="deleteComment(${i})">삭제</button>
+      </div>
+    `).join('');
+  }
+  
+  document.getElementById('newComment').value = '';
+  document.getElementById('commentModal').classList.add('show');
+}
+
+function closeCommentModal() {
+  document.getElementById('commentModal').classList.remove('show');
+}
+
+function addComment() {
+  const commentText = document.getElementById('newComment').value.trim();
+  if (!commentText) {
+    alert('코멘트를 입력하세요');
+    return;
+  }
+  storage.addComment(currentContent.book, currentContent.chapter, currentContent.verse, commentText);
+  openCommentModal();
+  showCard();
+}
+
+function deleteComment(index) {
+  if (confirm('이 코멘트를 삭제하시겠습니까?')) {
+    storage.deleteComment(currentContent.book, currentContent.chapter, currentContent.verse, index);
+    openCommentModal();
+    showCard();
+  }
+}
+
+function openBookmarkModal() {
+  const groups = storage.getBookmarkGroups();
+  const currentGroups = storage.getBookmarkGroupsForVerse(currentContent.book, currentContent.chapter, currentContent.verse);
+  const groupList = document.getElementById('bookmarkGroupList');
+  
+  if (groups.length === 0) {
+    groupList.innerHTML = '<div style="color:#999;text-align:center;padding:20px">등록된 그룹이 없습니다</div>';
+  } else {
+    groupList.innerHTML = groups.map(group => {
+      const isChecked = currentGroups.includes(group);
+      return `
+        <div class="checkbox-item">
+          <input type="checkbox" id="group_${group}" ${isChecked ? 'checked' : ''} onchange="toggleBookmarkGroup('${group}', this.checked)">
+          <label for="group_${group}" style="flex:1">${group}</label>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  document.getElementById('bookmarkModal').classList.add('show');
+}
+
+function closeBookmarkModal() {
+  document.getElementById('bookmarkModal').classList.remove('show');
+  document.getElementById('newBookmarkGroup').value = '';
+}
+
+function addNewBookmarkGroup() {
+  const groupName = document.getElementById('newBookmarkGroup').value.trim();
+  if (!groupName) {
+    alert('그룹 이름을 입력하세요');
+    return;
+  }
+  storage.addBookmark(groupName, currentContent.book, currentContent.chapter, currentContent.verse);
+  document.getElementById('newBookmarkGroup').value = '';
+  openBookmarkModal();
+  showCard();
+}
+
+function toggleBookmarkGroup(group, checked) {
+  if (checked) {
+    storage.addBookmark(group, currentContent.book, currentContent.chapter, currentContent.verse);
+  } else {
+    storage.removeBookmark(group, currentContent.book, currentContent.chapter, currentContent.verse);
+  }
+  showCard();
+}
+
+function toggleRead() {
+  storage.toggleRead(currentContent.book, currentContent.chapter, currentContent.verse);
+  showCard();
+}
+
+function toggleTheme() {
+  const body = document.body;
+  const btn = document.querySelector('.theme-toggle');
+  if (body.classList.contains('light')) {
+    body.classList.remove('light');
+    body.classList.add('dark');
+    btn.textContent = '☀️';
+  } else {
+    body.classList.remove('dark');
+    body.classList.add('light');
+    btn.textContent = '🌙';
+  }
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function goToMode(mode) {
+  toggleSidebar();
+  currentMode = mode;
+  currentIndex = 0;
+  if (mode === 'bookmark') {
+    showBookmarkList();
+  } else if (mode === 'stats') {
+    showStats();
+  } else {
+    loadContents();
+  }
+}
+
+function showBookmarkList() {
+  const groups = storage.getBookmarkGroups();
+  if (groups.length === 0) {
+    document.getElementById('mainContainer').innerHTML = '<div class="no-data">등록된 북마크가 없습니다</div>';
+    return;
+  }
+  let html = '<div class="page-container"><h2 style="margin-bottom:20px">북마크 그룹 선택</h2>';
+  groups.forEach(group => {
+    html += `<div class="sidebar-item" onclick="selectBookmarkGroup('${group}')">${group}</div>`;
+  });
+  html += '</div>';
+  document.getElementById('mainContainer').innerHTML = html;
+}
+
+function selectBookmarkGroup(group) {
+  currentBookmarkGroup = group;
+  loadContents();
+}
+
+function showStats() {
+  const stats = [];
+  BOOKS.forEach(book => {
+    const bookContents = CONTENTS.filter(c => c.book === book.id);
+    let todayCount = 0;
+    let weekCount = 0;
+    bookContents.forEach(content => {
+      if (storage.isReadToday(content.book, content.chapter, content.verse)) todayCount++;
+      if (storage.isReadThisWeek(content.book, content.chapter, content.verse)) weekCount++;
+    });
+    stats.push({
+      bookName: book.name,
+      total: bookContents.length,
+      today: todayCount,
+      week: weekCount
+    });
+  });
+  
+  let html = '<div class="page-container"><h2 style="margin-bottom:20px">통계</h2><table class="stats-table"><thead><tr><th>책</th><th>전체</th><th>오늘</th><th>이번주</th></tr></thead><tbody>';
+  stats.forEach(stat => {
+    html += `<tr><td>${stat.bookName}</td><td>${stat.total}</td><td>${stat.today}</td><td>${stat.week}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('mainContainer').innerHTML = html;
+}
+
+function onBookFilterChange() {
+  currentBookFilter = document.getElementById('bookSelector').value;
+  currentIndex = 0;
+  loadContents();
+}
+
+function exportLocalStorage() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    data[key] = localStorage.getItem(key);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `flashcard_data_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importLocalStorage() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        Object.keys(data).forEach(key => {
+          localStorage.setItem(key, data[key]);
+        });
+        alert('데이터를 성공적으로 가져왔습니다');
+        loadContents();
+      } catch (err) {
+        alert('파일을 읽는 중 오류가 발생했습니다');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function showImportPage() {
+  toggleSidebar();
+  const html = `
+    <div class="page-container">
+      <h2 style="margin-bottom:20px">Content/Book 가져오기</h2>
+      <div class="import-section">
+        <label class="import-label">Content JSON 파일</label>
+        <input type="file" id="contentFile" accept=".json">
+        <button class="modal-btn primary" onclick="importContent()" style="width:100%;margin-top:10px">Content 가져오기</button>
+      </div>
+      <div class="import-section">
+        <label class="import-label">Book JSON 파일</label>
+        <input type="file" id="bookFile" accept=".json">
+        <button class="modal-btn primary" onclick="importBook()" style="width:100%;margin-top:10px">Book 가져오기</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('mainContainer').innerHTML = html;
+}
+
+function importContent() {
+  const file = document.getElementById('contentFile').files[0];
+  if (!file) {
+    alert('파일을 선택하세요');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      CONTENTS = data;
+      alert('Content를 성공적으로 가져왔습니다');
+      updateBookSelector();
+      currentMode = 'all';
+      currentIndex = 0;
+      loadContents();
+    } catch (err) {
+      alert('파일을 읽는 중 오류가 발생했습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function importBook() {
+  const file = document.getElementById('bookFile').files[0];
+  if (!file) {
+    alert('파일을 선택하세요');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      BOOKS.length = 0;
+      BOOKS.push(...data);
+      alert('Book을 성공적으로 가져왔습니다');
+      updateBookSelector();
+    } catch (err) {
+      alert('파일을 읽는 중 오류가 발생했습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function updateBookSelector() {
+  const selector = document.getElementById('bookSelector');
+  selector.innerHTML = '<option value="">전체</option>';
+  BOOKS.forEach(book => {
+    const option = document.createElement('option');
+    option.value = book.id;
+    option.textContent = book.name;
+    selector.appendChild(option);
+  });
+}
+
+// Initialize
+updateBookSelector();
+if (CONTENTS.length > 0) {
+  loadContents();
+}
+</script>
+</body>
+</html>
