@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#2a2a2a">
+  <title>단어장</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif; transition: background-color 0.3s, color 0.3s; overflow: hidden; }
+    body.light { background-color: #f5f5f5; color: #333; }
+    body.dark { background-color: #1a1a1a; color: #e0e0e0; }
+    .header { position: fixed; top: 0; left: 0; right: 0; height: 140px; display: flex; flex-direction: column; justify-content: center; padding: 10px 15px; z-index: 100; }
+    body.light .header { background-color: #fff; border-bottom: 1px solid #e0e0e0; }
+    body.dark .header { background-color: #2a2a2a; border-bottom: 1px solid #444; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .header-top-right { display: flex; gap: 8px; }
+    .header-selectors { display: flex; gap: 8px; margin-bottom: 8px; }
+    .header-bottom { display: flex; gap: 8px; align-items: center; }
+    .hamburger { width: 30px; height: 30px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-around; padding: 5px 0; }
+    .hamburger span { display: block; height: 3px; background-color: currentColor; border-radius: 2px; }
+    .filter-selector { flex: 1; padding: 8px 12px; border: 1px solid; border-radius: 8px; font-size: 14px; min-width: 0; }
+    body.light .filter-selector { background-color: #f9f9f9; border-color: #ddd; color: #333; }
+    body.dark .filter-selector { background-color: #333; border-color: #555; color: #e0e0e0; }
+    .title-mode-toggle { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; font-size: 14px; font-weight: bold; flex-shrink: 0; }
+    body.light .title-mode-toggle { background-color: #2196f3; color: #fff; }
+    body.dark .title-mode-toggle { background-color: #2196f3; color: #fff; }
+    .theme-toggle { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; flex-shrink: 0; }
+    body.light .theme-toggle { background-color: #333; color: #fff; }
+    body.dark .theme-toggle { background-color: #fff; color: #333; }
+    .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; z-index: 200; transition: left 0.3s; padding: 20px; overflow-y: auto; }
+    body.light .sidebar { background-color: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+    body.dark .sidebar { background-color: #2a2a2a; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+    .sidebar.open { left: 0; }
+    .sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 150; display: none; }
+    .sidebar-overlay.show { display: block; }
+    .sidebar-item { padding: 15px 10px; margin: 5px 0; cursor: pointer; border-radius: 8px; }
+    body.light .sidebar-item:hover { background-color: #f0f0f0; }
+    body.dark .sidebar-item:hover { background-color: #3a3a3a; }
+    .container { position: fixed; top: 140px; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { width: 100%; max-width: 600px; height: calc(100vh - 220px); position: relative; perspective: 1000px; display: flex; flex-direction: column; }
+    .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; flex: 1; display: flex; }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    body.light .card-face { background-color: #fff; }
+    body.dark .card-face { background-color: #2a2a2a; }
+    .card-back { transform: rotateY(180deg); }
+    body.light .card-back { background-color: #fff; }
+    body.dark .card-back { background-color: #2a2a2a; }
+    .card-title { padding: 20px; font-size: 18px; font-weight: 500; text-align: center; border-bottom: 1px solid; position: relative; flex-shrink: 0; min-height: 70px; display: flex; align-items: center; justify-content: center; gap: 10px; line-height: 1.4; }
+    body.light .card-title { border-color: #e0e0e0; }
+    body.dark .card-title { border-color: #444; }
+    .card-title.size-small { font-size: 14px; }
+    .card-title.size-medium { font-size: 16px; }
+    .card-title.size-large { font-size: 18px; }
+    .card-counter { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.7; }
+    .card-content { 
+      flex: 1 1 auto; 
+      padding: 30px; 
+      overflow-y: scroll !important; 
+      overflow-x: hidden; 
+      font-size: 16px; 
+      line-height: 1.8; 
+      white-space: pre-wrap; 
+      word-wrap: break-word; 
+      min-height: 0;
+      max-height: 100%;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: auto;
+      position: relative;
+    }
+    .card-content::-webkit-scrollbar { width: 8px; }
+    .card-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+    .card-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.3); border-radius: 4px; }
+    .card-content.editing { padding: 15px; }
+    .edit-textarea { width: 100%; height: 100%; padding: 15px; border: 2px solid #ffd700; border-radius: 8px; font-size: 16px; line-height: 1.8; resize: none; font-family: inherit; }
+    body.light .edit-textarea { background-color: #fffef5; color: #333; }
+    body.dark .edit-textarea { background-color: #2a2a14; color: #e0e0e0; }
+    .edit-buttons { display: flex; gap: 10px; padding: 15px; justify-content: center; border-top: 2px solid #ffd700; flex-shrink: 0; }
+    .edit-btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .edit-btn.save { background-color: #4caf50; color: #fff; }
+    .edit-btn.cancel { background-color: #f44336; color: #fff; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-top: 1px solid; flex-shrink: 0; min-height: 70px; }
+    body.light .card-footer { border-color: #e0e0e0; }
+    body.dark .card-footer { border-color: #444; }
+    .week-status { font-size: 14px; font-weight: 500; padding: 4px 8px; border-radius: 4px; }
+    .week-status.read { color: #4caf50; background-color: rgba(76, 175, 80, 0.1); }
+    .week-status.unread { color: #f44336; background-color: rgba(244, 67, 54, 0.1); }
+    .action-buttons { display: flex; gap: 15px; }
+    .action-btn { width: 40px; height: 40px; border: 2px solid transparent; border-radius: 50%; cursor: pointer; font-size: 20px; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+    body.light .action-btn { background-color: #f5f5f5; color: #666; }
+    body.dark .action-btn { background-color: #3a3a3a; color: #aaa; }
+    .action-btn:active { transform: scale(0.95); }
+    .action-btn.active { background-color: #ff9800; color: #fff; border-color: #ff9800; }
+    .action-btn.has-comment { background-color: #2196f3; color: #fff; border-color: #2196f3; }
+    .action-btn.has-bookmark { background-color: #ffd700; color: #333; border-color: #ffd700; }
+    .edit-icon-btn { position: absolute; right: 20px; top: 120px; width: 50px; height: 50px; border-radius: 50%; background-color: #ffd700; color: #333; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(255,215,0,0.4); z-index: 10; }
+    .edit-icon-btn:active { transform: scale(0.95); }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 300; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.5); }
+    .modal.show { display: flex; }
+    .modal-content { width: 90%; max-width: 500px; max-height: 80vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    body.light .modal-content { background-color: #fff; }
+    body.dark .modal-content { background-color: #2a2a2a; }
+    .modal-header { padding: 20px; font-size: 18px; font-weight: 500; border-bottom: 1px solid; }
+    body.light .modal-header { border-color: #e0e0e0; }
+    body.dark .modal-header { border-color: #444; }
+    .modal-body { flex: 1; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-footer { padding: 15px 20px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid; }
+    body.light .modal-footer { border-color: #e0e0e0; }
+    body.dark .modal-footer { border-color: #444; }
+    .modal-btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .modal-btn.primary { background-color: #2196f3; color: #fff; }
+    body.light .modal-btn.secondary { background-color: #f5f5f5; color: #666; }
+    body.dark .modal-btn.secondary { background-color: #3a3a3a; color: #aaa; }
+    textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid; border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit; }
+    body.light textarea { background-color: #f9f9f9; border-color: #ddd; color: #333; }
+    body.dark textarea { background-color: #333; border-color: #555; color: #e0e0e0; }
+    .comment-item { padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+    body.light .comment-item { background-color: #f9f9f9; }
+    body.dark .comment-item { background-color: #333; }
+    .comment-text { flex: 1; white-space: pre-wrap; line-height: 1.5; }
+    .delete-btn { padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: 10px; background-color: #f44336; color: #fff; }
+    .stats-table { width: 100%; border-collapse: collapse; }
+    .stats-table th, .stats-table td { padding: 12px; text-align: left; border-bottom: 1px solid; }
+    body.light .stats-table th, body.light .stats-table td { border-color: #e0e0e0; }
+    body.dark .stats-table th, body.dark .stats-table td { border-color: #444; }
+    .loading { text-align: center; padding: 40px; font-size: 18px; }
+    input[type="text"], input[type="file"] { width: 100%; padding: 10px 12px; border: 1px solid; border-radius: 8px; font-size: 14px; margin: 10px 0; }
+    body.light input[type="text"], body.light input[type="file"] { background-color: #f9f9f9; border-color: #ddd; color: #333; }
+    body.dark input[type="text"], body.dark input[type="file"] { background-color: #333; border-color: #555; color: #e0e0e0; }
+    .checkbox-item { padding: 10px; margin: 5px 0; display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 6px; }
+    .no-data { text-align: center; padding: 40px; color: #999; }
+    .page-container { padding: 20px; overflow-y: auto; height: 100%; }
+    .import-section { margin: 20px 0; }
+    .import-label { display: block; margin: 15px 0 5px; font-weight: 500; }
+    .bookmark-item-container { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    body.light .bookmark-item-container { background-color: #f9f9f9; }
+    body.dark .bookmark-item-container { background-color: #333; }
+    .bookmark-item-name { flex: 1; cursor: pointer; font-size: 16px; }
+    .bookmark-item-buttons { display: flex; gap: 8px; }
+    .bookmark-edit-btn, .bookmark-delete-btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .bookmark-edit-btn { background-color: #2196f3; color: #fff; }
+    .bookmark-delete-btn { background-color: #f44336; color: #fff; }
+    .image-move-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; background-color: #4caf50; color: #fff; }
+    .image-move-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    .stat-unit-selector { width: 100%; padding: 10px; border: 1px solid; border-radius: 8px; font-size: 14px; margin-bottom: 20px; }
+    body.light .stat-unit-selector { background-color: #f9f9f9; border-color: #ddd; color: #333; }
+    body.dark .stat-unit-selector { background-color: #333; border-color: #555; color: #e0e0e0; }
+  </style>
+</head>
+<body class="light">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-item" onclick="loadMainView()">🏠 홈</div>
+    <div class="sidebar-item" onclick="showBookmarkList()">📑 북마크 관리</div>
+    <div class="sidebar-item" onclick="showStats()">📊 통계</div>
+    <div class="sidebar-item" onclick="showDataManagement()">⚙️ 데이터 관리</div>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="header">
+    <div class="header-top">
+      <div class="hamburger" onclick="toggleSidebar()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="header-top-right">
+        <button class="title-mode-toggle" id="titleModeToggle" onclick="toggleTitleMode()">번호</button>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+      </div>
+    </div>
+    <div class="header-selectors">
+      <select class="filter-selector" id="partSelector" onchange="onPartChange()">
+        <option value="">전체 Part</option>
+      </select>
+      <select class="filter-selector" id="chapterSelector" onchange="onChapterChange()">
+        <option value="">전체 Chapter</option>
+      </select>
+    </div>
+    <div class="header-bottom">
+      <select class="filter-selector" id="sectionSelector" onchange="onSectionChange()">
+        <option value="">전체 Section</option>
+      </select>
+      <select class="filter-selector" id="subSectionSelector" onchange="onSubSectionChange()">
+        <option value="">전체 SubSection</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="container" id="mainContainer">
+    <div class="loading">데이터를 불러오는 중...</div>
+  </div>
+
+  <!-- 댓글 모달 -->
+  <div class="modal" id="commentModal">
+    <div class="modal-content">
+      <div class="modal-header">댓글</div>
+      <div class="modal-body">
+        <textarea id="commentInput" placeholder="댓글을 입력하세요"></textarea>
+        <div id="commentList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeCommentModal()">닫기</button>
+        <button class="modal-btn primary" onclick="saveComment()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 북마크 모달 -->
+  <div class="modal" id="bookmarkModal">
+    <div class="modal-content">
+      <div class="modal-header">북마크 그룹 선택</div>
+      <div class="modal-body" id="bookmarkGroupList"></div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeBookmarkModal()">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 북마크 그룹 이름 변경 모달 -->
+  <div class="modal" id="renameBookmarkModal">
+    <div class="modal-content">
+      <div class="modal-header">그룹 이름 수정</div>
+      <div class="modal-body">
+        <input type="text" id="renameBookmarkInput" placeholder="새 그룹 이름">
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeRenameBookmarkModal()">취소</button>
+        <button class="modal-btn primary" onclick="confirmRenameBookmark()">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 새 북마크 그룹 생성 모달 -->
+  <div class="modal" id="newBookmarkModal">
+    <div class="modal-content">
+      <div class="modal-header">새 북마크 그룹</div>
+      <div class="modal-body">
+        <input type="text" id="newBookmarkInput" placeholder="그룹 이름">
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeNewBookmarkModal()">취소</button>
+        <button class="modal-btn primary" onclick="confirmNewBookmark()">생성</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ============ 데이터 ============
+let PART_LIST = [
+  { sequence: 1, part: "I", name: "파트 1" },
+  { sequence: 2, part: "II", name: "파트2" }
+];
+
+let CHAPTER_LIST = [
+  { sequence: 1, part: "I", chapter: 1, name: "챕터1" },
+  { sequence: 2, part: "I", chapter: 2, name: "챕터2" },
+  { sequence: 3, part: "I", chapter: 3, name: "챕터3" },
+  { sequence: 4, part: "I", chapter: 4, name: "챕터4" },
+  { sequence: 5, part: "II", chapter: 1, name: "챕터1" }
+];
+
+let SECTION_LIST = [
+  { sequence: 1, part: "I", chapter: 1, section: 1, name: "섹션1" },
+  { sequence: 2, part: "I", chapter: 1, section: 2, name: "섹션2" },
+  { sequence: 3, part: "II", chapter: 1, section: 1, name: "섹션1" },
+  { sequence: 4, part: "II", chapter: 1, section: 2, name: "섹션2" }
+];
+
+let CONTENTS = [
+  { sequence: 1, part: "I", chapter: 1, section: 1, subSection: "가", content: "내용1", page: "13" },
+  { sequence: 2, part: "I", chapter: 1, section: 1, subSection: "나", content: "내용2", page: "13" },
+  { sequence: 3, part: "II", chapter: 1, section: 1, subSection: "가", content: "내용1", page: "13" },
+  { sequence: 4, part: "II", chapter: 1, section: 1, subSection: "나", content: "내용2", page: "13" }
+];
+
+// ============ 상태 관리 ============
+let currentIndex = 0;
+let filteredContents = [];
+let isFlipped = false;
+let titleMode = 'number';
+let currentPartFilter = '';
+let currentChapterFilter = '';
+let currentSectionFilter = '';
+let currentSubSectionFilter = '';
+let currentBookmarkGroup = null;
+let isEditMode = false;
+let originalContent = '';
+
+// ============ 로컬 스토리지 관리 ============
+const storage = {
+  getReadStatus(part, chapter, section, subSection) {
+    const key = `read_${part}_${chapter}_${section}_${subSection}`;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  },
+  
+  setReadToday(part, chapter, section, subSection) {
+    const key = `read_${part}_${chapter}_${section}_${subSection}`;
+    const dates = this.getReadStatus(part, chapter, section, subSection);
+    const today = new Date().toISOString().split('T')[0];
+    if (!dates.includes(today)) {
+      dates.push(today);
+      localStorage.setItem(key, JSON.stringify(dates));
+    }
+  },
+  
+  isReadToday(part, chapter, section, subSection) {
+    const dates = this.getReadStatus(part, chapter, section, subSection);
+    const today = new Date().toISOString().split('T')[0];
+    return dates.includes(today);
+  },
+  
+  isReadThisWeek(part, chapter, section, subSection) {
+    const dates = this.getReadStatus(part, chapter, section, subSection);
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monday.setHours(0, 0, 0, 0);
+    return dates.some(dateStr => {
+      const date = new Date(dateStr);
+      return date >= monday;
+    });
+  },
+  
+  getComments(part, chapter, section, subSection) {
+    const key = `comment_${part}_${chapter}_${section}_${subSection}`;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  },
+  
+  addComment(part, chapter, section, subSection, text) {
+    const key = `comment_${part}_${chapter}_${section}_${subSection}`;
+    const comments = this.getComments(part, chapter, section, subSection);
+    comments.push({ text, date: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(comments));
+  },
+  
+  deleteComment(part, chapter, section, subSection, index) {
+    const key = `comment_${part}_${chapter}_${section}_${subSection}`;
+    const comments = this.getComments(part, chapter, section, subSection);
+    comments.splice(index, 1);
+    localStorage.setItem(key, JSON.stringify(comments));
+  },
+  
+  getBookmarkGroups() {
+    return JSON.parse(localStorage.getItem('bookmarkGroups') || '[]');
+  },
+  
+  createBookmarkGroup(name) {
+    const groups = this.getBookmarkGroups();
+    if (!groups.includes(name)) {
+      groups.push(name);
+      localStorage.setItem('bookmarkGroups', JSON.stringify(groups));
+    }
+  },
+  
+  getBookmarks(groupName) {
+    const key = `bookmark_${groupName}`;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  },
+  
+  addBookmark(groupName, part, chapter, section, subSection) {
+    const key = `bookmark_${groupName}`;
+    const bookmarks = this.getBookmarks(groupName);
+    const bookmark = { part, chapter, section, subSection };
+    const exists = bookmarks.some(b => 
+      b.part === part && b.chapter === chapter && b.section === section && b.subSection === subSection
+    );
+    if (!exists) {
+      bookmarks.push(bookmark);
+      localStorage.setItem(key, JSON.stringify(bookmarks));
+    }
+  },
+  
+  removeBookmark(groupName, part, chapter, section, subSection) {
+    const key = `bookmark_${groupName}`;
+    const bookmarks = this.getBookmarks(groupName);
+    const filtered = bookmarks.filter(b => 
+      !(b.part === part && b.chapter === chapter && b.section === section && b.subSection === subSection)
+    );
+    localStorage.setItem(key, JSON.stringify(filtered));
+  },
+  
+  isBookmarked(groupName, part, chapter, section, subSection) {
+    const bookmarks = this.getBookmarks(groupName);
+    return bookmarks.some(b => 
+      b.part === part && b.chapter === chapter && b.section === section && b.subSection === subSection
+    );
+  },
+  
+  renameBookmarkGroup(oldName, newName) {
+    const groups = this.getBookmarkGroups();
+    const index = groups.indexOf(oldName);
+    if (index !== -1) {
+      groups[index] = newName;
+      localStorage.setItem('bookmarkGroups', JSON.stringify(groups));
+      const oldKey = `bookmark_${oldName}`;
+      const newKey = `bookmark_${newName}`;
+      const bookmarks = localStorage.getItem(oldKey);
+      if (bookmarks) {
+        localStorage.setItem(newKey, bookmarks);
+        localStorage.removeItem(oldKey);
+      }
+    }
+  },
+  
+  deleteBookmarkGroup(name) {
+    const groups = this.getBookmarkGroups();
+    const filtered = groups.filter(g => g !== name);
+    localStorage.setItem('bookmarkGroups', JSON.stringify(filtered));
+    localStorage.removeItem(`bookmark_${name}`);
+  },
+  
+  reorderBookmarkGroups(fromIndex, toIndex) {
+    const groups = this.getBookmarkGroups();
+    const [moved] = groups.splice(fromIndex, 1);
+    groups.splice(toIndex, 0, moved);
+    localStorage.setItem('bookmarkGroups', JSON.stringify(groups));
+  },
+  
+  exportData() {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      data[key] = localStorage.getItem(key);
+    }
+    return data;
+  },
+  
+  importData(data, mode = 'merge') {
+    if (mode === 'reset') {
+      localStorage.clear();
+    }
+    Object.keys(data).forEach(key => {
+      localStorage.setItem(key, data[key]);
+    });
+  }
+};
+
+// ============ 초기화 ============
+function init() {
+  loadTheme();
+  loadTitleMode();
+  loadFromStorage();
+  updateSelectors();
+  loadContents();
+}
+
+function loadTheme() {
+  const theme = localStorage.getItem('theme') || 'light';
+  document.body.className = theme;
+  document.getElementById('themeToggle').textContent = theme === 'light' ? '🌙' : '☀️';
+}
+
+function loadTitleMode() {
+  titleMode = localStorage.getItem('titleMode') || 'number';
+  updateTitleModeButton();
+}
+
+function loadFromStorage() {
+  const savedContents = localStorage.getItem('CONTENTS');
+  if (savedContents) CONTENTS = JSON.parse(savedContents);
+  
+  const savedPartList = localStorage.getItem('PART_LIST');
+  if (savedPartList) PART_LIST = JSON.parse(savedPartList);
+  
+  const savedChapterList = localStorage.getItem('CHAPTER_LIST');
+  if (savedChapterList) CHAPTER_LIST = JSON.parse(savedChapterList);
+  
+  const savedSectionList = localStorage.getItem('SECTION_LIST');
+  if (savedSectionList) SECTION_LIST = JSON.parse(savedSectionList);
+}
+
+function saveToStorage() {
+  localStorage.setItem('CONTENTS', JSON.stringify(CONTENTS));
+  localStorage.setItem('PART_LIST', JSON.stringify(PART_LIST));
+  localStorage.setItem('CHAPTER_LIST', JSON.stringify(CHAPTER_LIST));
+  localStorage.setItem('SECTION_LIST', JSON.stringify(SECTION_LIST));
+}
+
+// ============ UI 업데이트 ============
+function updateSelectors() {
+  updatePartSelector();
+  updateChapterSelector();
+  updateSectionSelector();
+  updateSubSectionSelector();
+}
+
+function updatePartSelector() {
+  const selector = document.getElementById('partSelector');
+  const currentValue = selector.value;
+  selector.innerHTML = '<option value="">전체 Part</option>';
+  
+  const uniqueParts = [...new Set(PART_LIST.map(p => p.part))];
+  uniqueParts.forEach(part => {
+    const partInfo = PART_LIST.find(p => p.part === part);
+    const option = document.createElement('option');
+    option.value = part;
+    option.textContent = `${part} - ${partInfo.name}`;
+    selector.appendChild(option);
+  });
+  
+  if (currentValue && uniqueParts.includes(currentValue)) {
+    selector.value = currentValue;
+  }
+}
+
+function updateChapterSelector() {
+  const selector = document.getElementById('chapterSelector');
+  const currentValue = selector.value;
+  selector.innerHTML = '<option value="">전체 Chapter</option>';
+  
+  let chapters = CHAPTER_LIST;
+  if (currentPartFilter) {
+    chapters = chapters.filter(c => c.part === currentPartFilter);
+  }
+  
+  chapters.forEach(chapter => {
+    const option = document.createElement('option');
+    option.value = chapter.chapter;
+    option.textContent = `${chapter.chapter} - ${chapter.name}`;
+    selector.appendChild(option);
+  });
+  
+  if (currentValue && chapters.some(c => c.chapter == currentValue)) {
+    selector.value = currentValue;
+  } else {
+    currentChapterFilter = '';
+  }
+}
+
+function updateSectionSelector() {
+  const selector = document.getElementById('sectionSelector');
+  const currentValue = selector.value;
+  selector.innerHTML = '<option value="">전체 Section</option>';
+  
+  let sections = SECTION_LIST;
+  if (currentPartFilter) {
+    sections = sections.filter(s => s.part === currentPartFilter);
+  }
+  if (currentChapterFilter) {
+    sections = sections.filter(s => s.chapter == currentChapterFilter);
+  }
+  
+  sections.forEach(section => {
+    const option = document.createElement('option');
+    option.value = section.section;
+    option.textContent = `${section.section} - ${section.name}`;
+    selector.appendChild(option);
+  });
+  
+  if (currentValue && sections.some(s => s.section == currentValue)) {
+    selector.value = currentValue;
+  } else {
+    currentSectionFilter = '';
+  }
+}
+
+function updateSubSectionSelector() {
+  const selector = document.getElementById('subSectionSelector');
+  const currentValue = selector.value;
+  selector.innerHTML = '<option value="">전체 SubSection</option>';
+  
+  let contents = CONTENTS;
+  if (currentPartFilter) {
+    contents = contents.filter(c => c.part === currentPartFilter);
+  }
+  if (currentChapterFilter) {
+    contents = contents.filter(c => c.chapter == currentChapterFilter);
+  }
+  if (currentSectionFilter) {
+    contents = contents.filter(c => c.section == currentSectionFilter);
+  }
+  
+  const uniqueSubSections = [...new Set(contents.map(c => c.subSection))].sort();
+  uniqueSubSections.forEach(subSection => {
+    const option = document.createElement('option');
+    option.value = subSection;
+    option.textContent = subSection;
+    selector.appendChild(option);
+  });
+  
+  if (currentValue && uniqueSubSections.includes(currentValue)) {
+    selector.value = currentValue;
+  } else {
+    currentSubSectionFilter = '';
+  }
+}
+
+function onPartChange() {
+  currentPartFilter = document.getElementById('partSelector').value;
+  currentChapterFilter = '';
+  currentSectionFilter = '';
+  currentSubSectionFilter = '';
+  updateChapterSelector();
+  updateSectionSelector();
+  updateSubSectionSelector();
+  loadContents();
+}
+
+function onChapterChange() {
+  currentChapterFilter = document.getElementById('chapterSelector').value;
+  currentSectionFilter = '';
+  currentSubSectionFilter = '';
+  updateSectionSelector();
+  updateSubSectionSelector();
+  loadContents();
+}
+
+function onSectionChange() {
+  currentSectionFilter = document.getElementById('sectionSelector').value;
+  currentSubSectionFilter = '';
+  updateSubSectionSelector();
+  loadContents();
+}
+
+function onSubSectionChange() {
+  currentSubSectionFilter = document.getElementById('subSectionSelector').value;
+  loadContents();
+}
+
+function loadContents() {
+  filteredContents = CONTENTS.filter(content => {
+    if (currentBookmarkGroup) {
+      const isBookmarked = storage.isBookmarked(
+        currentBookmarkGroup,
+        content.part,
+        content.chapter,
+        content.section,
+        content.subSection
+      );
+      if (!isBookmarked) return false;
+    }
+    
+    if (currentPartFilter && content.part !== currentPartFilter) return false;
+    if (currentChapterFilter && content.chapter != currentChapterFilter) return false;
+    if (currentSectionFilter && content.section != currentSectionFilter) return false;
+    if (currentSubSectionFilter && content.subSection !== currentSubSectionFilter) return false;
+    
+    return true;
+  });
+  
+  currentIndex = 0;
+  renderCard();
+}
+
+function renderCard() {
+  const container = document.getElementById('mainContainer');
+  
+  if (filteredContents.length === 0) {
+    container.innerHTML = '<div class="no-data">표시할 내용이 없습니다</div>';
+    return;
+  }
+  
+  const content = filteredContents[currentIndex];
+  const isRead = storage.isReadToday(content.part, content.chapter, content.section, content.subSection);
+  const comments = storage.getComments(content.part, content.chapter, content.section, content.subSection);
+  const hasComment = comments.length > 0;
+  const hasBookmark = currentBookmarkGroup && storage.isBookmarked(
+    currentBookmarkGroup,
+    content.part,
+    content.chapter,
+    content.section,
+    content.subSection
+  );
+  
+  const partInfo = PART_LIST.find(p => p.part === content.part);
+  const chapterInfo = CHAPTER_LIST.find(c => c.part === content.part && c.chapter == content.chapter);
+  const sectionInfo = SECTION_LIST.find(s => s.part === content.part && s.chapter == content.chapter && s.section == content.section);
+  
+  let titleText = '';
+  if (titleMode === 'number') {
+    titleText = `${content.part}.${content.chapter}.${content.section}.${content.subSection}`;
+  } else {
+    const partName = partInfo ? partInfo.name : content.part;
+    const chapterName = chapterInfo ? chapterInfo.name : `Chapter ${content.chapter}`;
+    const sectionName = sectionInfo ? sectionInfo.name : `Section ${content.section}`;
+    titleText = `${partName} > ${chapterName} > ${sectionName} > ${content.subSection}`;
+  }
+  
+  if (content.page) {
+    titleText += ` (p.${content.page})`;
+  }
+  
+  // 제목 길이에 따라 글자 크기 결정
+  let titleSizeClass = 'size-large';
+  if (titleText.length > 80) {
+    titleSizeClass = 'size-small';
+  } else if (titleText.length > 50) {
+    titleSizeClass = 'size-medium';
+  }
+  
+  container.innerHTML = `
+    <div class="card">
+      <button class="edit-icon-btn" onclick="toggleEditMode()">✏️</button>
+      <div class="card-inner" id="cardInner">
+        <div class="card-face card-front">
+          <div class="card-title ${titleSizeClass}">
+            ${titleText}
+            <span class="card-counter">${currentIndex + 1}/${filteredContents.length}</span>
+          </div>
+          <div class="card-content" id="cardContent">
+            ${content.content}
+          </div>
+          <div class="card-footer">
+            <span class="week-status ${isRead ? 'read' : 'unread'}">
+              ${isRead ? '오늘 읽음' : '읽지 않음'}
+            </span>
+            <div class="action-buttons">
+              <button class="action-btn ${hasComment ? 'has-comment' : ''}" onclick="openCommentModal()" title="댓글">
+                💬
+              </button>
+              <button class="action-btn ${hasBookmark ? 'has-bookmark' : ''}" onclick="toggleBookmark()" title="북마크">
+                ⭐
+              </button>
+              <button class="action-btn ${isRead ? 'active' : ''}" onclick="toggleRead()" title="읽음 표시">
+                ✓
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  setupCardSwipe();
+}
+
+function setupCardSwipe() {
+  const card = document.querySelector('.card');
+  if (!card) return;
+  
+  let startX = 0;
+  let currentX = 0;
+  
+  card.addEventListener('touchstart', (e) => {
+    if (isEditMode) return;
+    startX = e.touches[0].clientX;
+  });
+  
+  card.addEventListener('touchmove', (e) => {
+    if (isEditMode) return;
+    currentX = e.touches[0].clientX;
+  });
+  
+  card.addEventListener('touchend', () => {
+    if (isEditMode) return;
+    const diff = startX - currentX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        nextCard();
+      } else {
+        prevCard();
+      }
+    }
+  });
+}
+
+function nextCard() {
+  if (currentIndex < filteredContents.length - 1) {
+    currentIndex++;
+    renderCard();
+  }
+}
+
+function prevCard() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderCard();
+  }
+}
+
+function toggleRead() {
+  const content = filteredContents[currentIndex];
+  storage.setReadToday(content.part, content.chapter, content.section, content.subSection);
+  renderCard();
+}
+
+function toggleBookmark() {
+  if (!currentBookmarkGroup) {
+    openBookmarkModal();
+  } else {
+    const content = filteredContents[currentIndex];
+    const isBookmarked = storage.isBookmarked(
+      currentBookmarkGroup,
+      content.part,
+      content.chapter,
+      content.section,
+      content.subSection
+    );
+    
+    if (isBookmarked) {
+      storage.removeBookmark(
+        currentBookmarkGroup,
+        content.part,
+        content.chapter,
+        content.section,
+        content.subSection
+      );
+    } else {
+      storage.addBookmark(
+        currentBookmarkGroup,
+        content.part,
+        content.chapter,
+        content.section,
+        content.subSection
+      );
+    }
+    renderCard();
+  }
+}
+
+// ============ 편집 모드 ============
+function toggleEditMode() {
+  const content = filteredContents[currentIndex];
+  const contentDiv = document.getElementById('cardContent');
+  
+  if (!isEditMode) {
+    isEditMode = true;
+    originalContent = content.content;
+    
+    contentDiv.classList.add('editing');
+    contentDiv.innerHTML = `
+      <textarea class="edit-textarea" id="editTextarea">${content.content}</textarea>
+    `;
+    
+    const footer = contentDiv.parentElement.querySelector('.card-footer');
+    footer.innerHTML = `
+      <div class="edit-buttons" style="width: 100%;">
+        <button class="edit-btn cancel" onclick="cancelEdit()">취소</button>
+        <button class="edit-btn save" onclick="saveEdit()">저장</button>
+      </div>
+    `;
+    
+    document.getElementById('editTextarea').focus();
+  }
+}
+
+function cancelEdit() {
+  isEditMode = false;
+  renderCard();
+}
+
+function saveEdit() {
+  const newContent = document.getElementById('editTextarea').value;
+  const content = filteredContents[currentIndex];
+  
+  const index = CONTENTS.findIndex(c => 
+    c.part === content.part && 
+    c.chapter === content.chapter && 
+    c.section === content.section && 
+    c.subSection === content.subSection
+  );
+  
+  if (index !== -1) {
+    CONTENTS[index].content = newContent;
+    saveToStorage();
+    isEditMode = false;
+    loadContents();
+  }
+}
+
+// ============ 댓글 모달 ============
+function openCommentModal() {
+  const content = filteredContents[currentIndex];
+  const comments = storage.getComments(content.part, content.chapter, content.section, content.subSection);
+  
+  document.getElementById('commentInput').value = '';
+  
+  let html = '';
+  comments.forEach((comment, index) => {
+    const date = new Date(comment.date).toLocaleString('ko-KR');
+    html += `
+      <div class="comment-item">
+        <div class="comment-text">${comment.text}<br><small style="opacity:0.7">${date}</small></div>
+        <button class="delete-btn" onclick="deleteComment(${index})">삭제</button>
+      </div>
+    `;
+  });
+  
+  document.getElementById('commentList').innerHTML = html || '<div style="text-align:center;color:#999">댓글이 없습니다</div>';
+  document.getElementById('commentModal').classList.add('show');
+}
+
+function closeCommentModal() {
+  document.getElementById('commentModal').classList.remove('show');
+}
+
+function saveComment() {
+  const text = document.getElementById('commentInput').value.trim();
+  if (!text) {
+    alert('댓글을 입력하세요');
+    return;
+  }
+  
+  const content = filteredContents[currentIndex];
+  storage.addComment(content.part, content.chapter, content.section, content.subSection, text);
+  openCommentModal();
+  renderCard();
+}
+
+function deleteComment(index) {
+  const content = filteredContents[currentIndex];
+  storage.deleteComment(content.part, content.chapter, content.section, content.subSection, index);
+  openCommentModal();
+  renderCard();
+}
+
+// ============ 북마크 모달 ============
+function openBookmarkModal() {
+  const groups = storage.getBookmarkGroups();
+  let html = '';
+  
+  groups.forEach(group => {
+    const escapedGroup = group.replace(/'/g, "\\'");
+    html += `
+      <div class="checkbox-item" onclick="selectBookmarkGroupAndAdd('${escapedGroup}')">
+        <span>📑 ${group}</span>
+      </div>
+    `;
+  });
+  
+  html += `
+    <div class="checkbox-item" onclick="createNewBookmarkGroup()" style="color:#2196f3;font-weight:500">
+      <span>+ 새 그룹 만들기</span>
+    </div>
+  `;
+  
+  document.getElementById('bookmarkGroupList').innerHTML = html;
+  document.getElementById('bookmarkModal').classList.add('show');
+}
+
+function closeBookmarkModal() {
+  document.getElementById('bookmarkModal').classList.remove('show');
+}
+
+function selectBookmarkGroupAndAdd(groupName) {
+  const content = filteredContents[currentIndex];
+  storage.addBookmark(groupName, content.part, content.chapter, content.section, content.subSection);
+  closeBookmarkModal();
+  renderCard();
+}
+
+function createNewBookmarkGroup() {
+  closeBookmarkModal();
+  document.getElementById('newBookmarkModal').classList.add('show');
+  setTimeout(() => {
+    const input = document.getElementById('newBookmarkInput');
+    input.focus();
+    input.value = '';
+  }, 100);
+}
+
+function closeNewBookmarkModal() {
+  document.getElementById('newBookmarkModal').classList.remove('show');
+}
+
+function confirmNewBookmark() {
+  const name = document.getElementById('newBookmarkInput').value.trim();
+  if (!name) {
+    alert('그룹 이름을 입력하세요');
+    return;
+  }
+  
+  const groups = storage.getBookmarkGroups();
+  if (groups.includes(name)) {
+    alert('이미 존재하는 그룹 이름입니다');
+    return;
+  }
+  
+  storage.createBookmarkGroup(name);
+  closeNewBookmarkModal();
+  
+  const content = filteredContents[currentIndex];
+  storage.addBookmark(name, content.part, content.chapter, content.section, content.subSection);
+  renderCard();
+}
+
+// ============ 사이드바 ============
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+}
+
+function loadMainView() {
+  toggleSidebar();
+  currentBookmarkGroup = null;
+  loadContents();
+}
+
+// ============ 테마 토글 ============
+function toggleTheme() {
+  const current = document.body.className;
+  const newTheme = current === 'light' ? 'dark' : 'light';
+  document.body.className = newTheme;
+  localStorage.setItem('theme', newTheme);
+  document.getElementById('themeToggle').textContent = newTheme === 'light' ? '🌙' : '☀️';
+}
+
+// ============ 제목 모드 토글 ============
+function toggleTitleMode() {
+  titleMode = titleMode === 'number' ? 'name' : 'number';
+  localStorage.setItem('titleMode', titleMode);
+  updateTitleModeButton();
+  renderCard();
+}
+
+function updateTitleModeButton() {
+  document.getElementById('titleModeToggle').textContent = titleMode === 'number' ? '번호' : '이름';
+}
+
+// ============ 데이터 관리 ============
+function showDataManagement() {
+  toggleSidebar();
+  const container = document.getElementById('mainContainer');
+  container.innerHTML = `
+    <div class="page-container">
+      <h2 style="margin-bottom:20px">데이터 관리</h2>
+      
+      <div class="import-section">
+        <h3>데이터 내보내기</h3>
+        <button class="modal-btn primary" onclick="exportData()">내보내기</button>
+      </div>
+      
+      <div class="import-section">
+        <h3>Contents 가져오기</h3>
+        <input type="file" id="contentsFileInput" accept=".json">
+        <button class="modal-btn primary" onclick="importContents('reset')">초기화 및 가져오기</button>
+        <button class="modal-btn primary" onclick="importContents('merge')">병합하여 가져오기</button>
+      </div>
+      
+      <div class="import-section">
+        <h3>Part List 가져오기</h3>
+        <input type="file" id="partListFileInput" accept=".json">
+        <button class="modal-btn primary" onclick="importPartList()">가져오기</button>
+      </div>
+      
+      <div class="import-section">
+        <h3>Chapter List 가져오기</h3>
+        <input type="file" id="chapterListFileInput" accept=".json">
+        <button class="modal-btn primary" onclick="importChapterList()">가져오기</button>
+      </div>
+      
+      <div class="import-section">
+        <h3>Section List 가져오기</h3>
+        <input type="file" id="sectionListFileInput" accept=".json">
+        <button class="modal-btn primary" onclick="importSectionList()">가져오기</button>
+      </div>
+      
+      <div class="import-section">
+        <h3>사용자 데이터 가져오기</h3>
+        <input type="file" id="userDataFileInput" accept=".json">
+        <button class="modal-btn primary" onclick="importUserData('reset')">초기화 및 가져오기</button>
+        <button class="modal-btn primary" onclick="importUserData('merge')">병합하여 가져오기</button>
+      </div>
+      
+      <div class="import-section" style="margin-top:40px;padding-top:20px;border-top:2px solid #f44336">
+        <h3 style="color:#f44336">전체 데이터 초기화</h3>
+        <button class="modal-btn" style="background-color:#f44336;color:#fff" onclick="resetAllData()">모든 데이터 삭제</button>
+      </div>
+    </div>
+  `;
+}
+
+function exportData() {
+  const data = storage.exportData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `flashcard_data_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importContents(mode) {
+  const fileInput = document.getElementById('contentsFileInput');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('파일을 선택하세요');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const newContents = JSON.parse(e.target.result);
+      
+      if (mode === 'reset') {
+        CONTENTS = newContents;
+      } else {
+        const existingKeys = new Set(
+          CONTENTS.map(c => `${c.part}_${c.chapter}_${c.section}_${c.subSection}`)
+        );
+        
+        newContents.forEach(content => {
+          const key = `${content.part}_${content.chapter}_${content.section}_${content.subSection}`;
+          if (!existingKeys.has(key)) {
+            CONTENTS.push(content);
+          }
+        });
+      }
+      
+      saveToStorage();
+      updateSelectors();
+      loadContents();
+      alert('Contents를 가져왔습니다');
+    } catch (err) {
+      alert('파일 형식이 올바르지 않습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function importPartList() {
+  const fileInput = document.getElementById('partListFileInput');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('파일을 선택하세요');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      PART_LIST = JSON.parse(e.target.result);
+      saveToStorage();
+      updateSelectors();
+      alert('Part List를 가져왔습니다');
+    } catch (err) {
+      alert('파일 형식이 올바르지 않습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function importChapterList() {
+  const fileInput = document.getElementById('chapterListFileInput');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('파일을 선택하세요');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      CHAPTER_LIST = JSON.parse(e.target.result);
+      saveToStorage();
+      updateSelectors();
+      alert('Chapter List를 가져왔습니다');
+    } catch (err) {
+      alert('파일 형식이 올바르지 않습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function importSectionList() {
+  const fileInput = document.getElementById('sectionListFileInput');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('파일을 선택하세요');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      SECTION_LIST = JSON.parse(e.target.result);
+      saveToStorage();
+      updateSelectors();
+      alert('Section List를 가져왔습니다');
+    } catch (err) {
+      alert('파일 형식이 올바르지 않습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function importUserData(mode) {
+  const fileInput = document.getElementById('userDataFileInput');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('파일을 선택하세요');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      storage.importData(data, mode);
+      loadContents();
+      alert('사용자 데이터를 가져왔습니다');
+    } catch (err) {
+      alert('파일 형식이 올바르지 않습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetAllData() {
+  if (confirm('모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    if (confirm('정말로 삭제하시겠습니까?')) {
+      localStorage.clear();
+      location.reload();
+    }
+  }
+}
+
+// ============ 북마크 목록 ============
+function showBookmarkList() {
+  toggleSidebar();
+  currentBookmarkGroup = null;
+  const groups = storage.getBookmarkGroups();
+  if (groups.length === 0) {
+    document.getElementById('mainContainer').innerHTML = '<div class="no-data">등록된 북마크가 없습니다</div>';
+    return;
+  }
+  
+  let html = '<div class="page-container"><h2 style="margin-bottom:20px">북마크 그룹 선택</h2>';
+  groups.forEach((group, index) => {
+    const escapedGroup = group.replace(/'/g, "\\'");
+    const bookmarkCount = storage.getBookmarks(group).length;
+    html += `
+      <div class="bookmark-item-container">
+        <div class="bookmark-item-name" onclick="selectBookmarkGroup('${escapedGroup}')">${group} (${bookmarkCount})</div>
+        <div class="bookmark-item-buttons">
+          <button class="image-move-btn" onclick="moveBookmarkUp(${index})" ${index === 0 ? 'disabled' : ''}>▲</button>
+          <button class="image-move-btn" onclick="moveBookmarkDown(${index})" ${index === groups.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="bookmark-edit-btn" onclick="editBookmarkGroup('${escapedGroup}')">수정</button>
+          <button class="bookmark-delete-btn" onclick="deleteBookmarkGroup('${escapedGroup}')">삭제</button>
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  document.getElementById('mainContainer').innerHTML = html;
+}
+
+function selectBookmarkGroup(group) {
+  currentBookmarkGroup = group;
+  loadContents();
+}
+
+// ============ 통계 ============
+function showStats() {
+  toggleSidebar();
+  const container = document.getElementById('mainContainer');
+  container.innerHTML = `
+    <div class="page-container">
+      <h2 style="margin-bottom:20px">통계</h2>
+      <select class="stat-unit-selector" id="statUnitSelector" onchange="updateStats()">
+        <option value="part">Part 단위</option>
+        <option value="chapter">Chapter 단위</option>
+      </select>
+      <div id="statsContent"></div>
+    </div>
+  `;
+  updateStats();
+}
+
+function updateStats() {
+  const unit = document.getElementById('statUnitSelector').value;
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  monday.setHours(0, 0, 0, 0);
+  
+  let stats = [];
+  
+  if (unit === 'part') {
+    PART_LIST.forEach(part => {
+      const partContents = CONTENTS.filter(c => c.part === part.part);
+      let todayCount = 0;
+      let weekCount = 0;
+      
+      partContents.forEach(content => {
+        if (storage.isReadToday(content.part, content.chapter, content.section, content.subSection)) {
+          todayCount++;
+        }
+        if (storage.isReadThisWeek(content.part, content.chapter, content.section, content.subSection)) {
+          weekCount++;
+        }
+      });
+      
+      stats.push({
+        name: `${part.part} - ${part.name}`,
+        total: partContents.length,
+        today: todayCount,
+        week: weekCount
+      });
+    });
+  } else {
+    CHAPTER_LIST.forEach(chapter => {
+      const chapterContents = CONTENTS.filter(c => 
+        c.part === chapter.part && c.chapter == chapter.chapter
+      );
+      let todayCount = 0;
+      let weekCount = 0;
+      
+      chapterContents.forEach(content => {
+        if (storage.isReadToday(content.part, content.chapter, content.section, content.subSection)) {
+          todayCount++;
+        }
+        if (storage.isReadThisWeek(content.part, content.chapter, content.section, content.subSection)) {
+          weekCount++;
+        }
+      });
+      
+      stats.push({
+        name: `${chapter.part}.${chapter.chapter} - ${chapter.name}`,
+        total: chapterContents.length,
+        today: todayCount,
+        week: weekCount
+      });
+    });
+  }
+  
+  let html = '<table class="stats-table"><thead><tr><th>구분</th><th>전체</th><th>오늘</th><th>이번주</th></tr></thead><tbody>';
+  stats.forEach(stat => {
+    html += `<tr><td>${stat.name}</td><td>${stat.total}</td><td>${stat.today}</td><td>${stat.week}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  
+  document.getElementById('statsContent').innerHTML = html;
+}
+
+// ============ 북마크 그룹 관리 ============
+let currentEditingBookmarkGroup = '';
+
+function editBookmarkGroup(oldName) {
+  currentEditingBookmarkGroup = oldName;
+  const modal = document.getElementById('renameBookmarkModal');
+  const input = document.getElementById('renameBookmarkInput');
+  input.value = oldName;
+  modal.classList.add('show');
+  
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 100);
+}
+
+function closeRenameBookmarkModal() {
+  document.getElementById('renameBookmarkModal').classList.remove('show');
+  currentEditingBookmarkGroup = '';
+}
+
+function confirmRenameBookmark() {
+  const newName = document.getElementById('renameBookmarkInput').value.trim();
+  
+  if (!newName) {
+    alert('그룹 이름을 입력해주세요.');
+    return;
+  }
+  
+  if (newName === currentEditingBookmarkGroup) {
+    closeRenameBookmarkModal();
+    return;
+  }
+  
+  const groups = storage.getBookmarkGroups();
+  if (groups.includes(newName)) {
+    alert('이미 존재하는 그룹 이름입니다.');
+    return;
+  }
+  
+  storage.renameBookmarkGroup(currentEditingBookmarkGroup, newName);
+  closeRenameBookmarkModal();
+  showBookmarkList();
+}
+
+function deleteBookmarkGroup(groupName) {
+  const bookmarks = storage.getBookmarks(groupName);
+  const message = bookmarks.length > 0 
+    ? `"${groupName}" 그룹에 ${bookmarks.length}개의 북마크가 있습니다.\n정말 삭제하시겠습니까?`
+    : `"${groupName}" 그룹을 삭제하시겠습니까?`;
+  
+  if (confirm(message)) {
+    storage.deleteBookmarkGroup(groupName);
+    showBookmarkList();
+  }
+}
+
+function moveBookmarkUp(index) {
+  if (index > 0) {
+    storage.reorderBookmarkGroups(index, index - 1);
+    showBookmarkList();
+  }
+}
+
+function moveBookmarkDown(index) {
+  const groups = storage.getBookmarkGroups();
+  if (index < groups.length - 1) {
+    storage.reorderBookmarkGroups(index, index + 1);
+    showBookmarkList();
+  }
+}
+
+// ============ 앱 시작 ============
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
